@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Игра для 6 школы</title>
+  <style>
+    :root {
+      --cell-size: 18vw; /* Размер клетки зависит от ширины экрана */
+      --max-cell-size: 80px; /* Но не больше 80px на ПК */
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      padding: 10px;
+      margin: 0;
+      background: #f0f8ff;
+      touch-action: manipulation; /* Убирает задержку клика на мобильных */
+    }
+
+    h1 { color: #2c3e50; font-size: 1.5rem; margin: 10px 0; }
+    p { margin: 5px 0; font-size: 0.9rem; }
+
+    /* Адаптивная сетка */
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(5, min(var(--cell-size), var(--max-cell-size)));
+      grid-template-rows: repeat(5, min(var(--cell-size), var(--max-cell-size)));
+      gap: 4px;
+      margin: 15px auto;
+      width: fit-content;
+      border: 3px solid #2c3e50;
+      padding: 4px;
+      background: #d0e7ff;
+      border-radius: 12px;
+    }
+
+    .cell {
+      width: 100%;
+      height: 100%;
+      background-color: #ecf0f1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      transition: background 0.2s;
+      overflow: hidden;
+    }
+
+    .cell img {
+      width: 80%;
+      height: 80%;
+      object-fit: contain;
+    }
+
+    /* Стили кнопок управления */
+    #controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .d-pad {
+      display: grid;
+      grid-template-areas: 
+        ". up ."
+        "left . right"
+        ". down .";
+      gap: 10px;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      padding: 15px;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      background: #34495e;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 4px #2c3e50;
+    }
+
+    button:active {
+      box-shadow: 0 2px #2c3e50;
+      transform: translateY(2px);
+    }
+
+    /* Навигационные кнопки */
+    .btn-up { grid-area: up; }
+    .btn-down { grid-area: down; }
+    .btn-left { grid-area: left; }
+    .btn-right { grid-area: right; }
+
+    /* Цветные кнопки */
+    .btn-green { background-color: #2ecc71; box-shadow: 0 4px #27ae60; }
+    .btn-red { background-color: #e74c3c; box-shadow: 0 4px #c0392b; }
+
+    .green { background-color: #2ecc71; }
+    .red { background-color: #e74c3c; }
+    
+    #counter-wrap {
+      font-size: 1.2rem;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Цветные зверята. Для школы №6</h1>
+<p>Счёт действий: <span id="counter">0</span></p>
+
+<div id="grid"></div>
+
+<div id="controls">
+  <div class="d-pad">
+    <button class="btn-up" onclick="move('up')">▲</button>
+    <button class="btn-left" onclick="move('left')">◀</button>
+    <button class="btn-right" onclick="move('right')">▶</button>
+    <button class="btn-down" onclick="move('down')">▼</button>
+  </div>
+
+  <div class="action-buttons">
+    <button class="btn-green" onclick="changeColor('green')">Зелёный</button>
+    <button class="btn-red" onclick="changeColor('red')">Красный</button>
+  </div>
+</div>
+
+<script>
+  const gridSize = 5;
+  const grid = document.getElementById('grid');
+  let counter = 0;
+
+  // Используем картинку с прозрачным фоном для лучшего вида
+  const catImg = 'https://cdn-icons-png.flaticon.com/512/1998/1998592.png'; 
+
+  let cells = [];
+  for (let i = 0; i < gridSize * gridSize; i++) {
+    const cell = document.createElement('div');
+    cell.classList.add('cell');
+    grid.appendChild(cell);
+    cells.push(cell);
+  }
+
+  let posX = 2;
+  let posY = 2;
+
+  function getIndex(x, y) {
+    return y * gridSize + x;
+  }
+
+  function draw() {
+    // Удаляем картинку из всех клеток, не стирая классы цветов
+    cells.forEach(cell => {
+      const img = cell.querySelector('img');
+      if (img) img.remove();
+    });
+
+    const img = document.createElement('img');
+    img.src = catImg;
+    cells[getIndex(posX, posY)].appendChild(img);
+  }
+
+  draw();
+
+  function move(direction) {
+    if (direction === 'up' && posY > 0) posY--;
+    if (direction === 'down' && posY < gridSize - 1) posY++;
+    if (direction === 'left' && posX > 0) posX--;
+    if (direction === 'right' && posX < gridSize - 1) posX++;
+    draw();
+    incrementCounter();
+  }
+
+  function changeColor(color) {
+    const cell = cells[getIndex(posX, posY)];
+    // Сохраняем базовый класс cell и добавляем цвет
+    cell.className = 'cell ' + color;
+    incrementCounter();
+  }
+
+  function incrementCounter() {
+    counter++;
+    document.getElementById('counter').textContent = counter;
+  }
+
+  // Поддержка клавиатуры для удобства на ПК
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp') move('up');
+    if (e.key === 'ArrowDown') move('down');
+    if (e.key === 'ArrowLeft') move('left');
+    if (e.key === 'ArrowRight') move('right');
+  });
+</script>
+
+</body>
+</html>
